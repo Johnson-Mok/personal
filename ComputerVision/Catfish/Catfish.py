@@ -36,7 +36,6 @@ if(take_picture):
     cv2.destroyAllWindows()
 
 # Compare with ground truth
-print(exists(PATH_TEST))
 if(exists(PATH_TEST)):
     # Retrieve images
     imgmain = face_recognition.load_image_file(PATH_TRUTH) 
@@ -63,4 +62,5 @@ if(exists(PATH_TEST)):
     cv2.imshow('Truth Image', imgmain)
     cv2.imshow('Test Image', imgTest)
     cv2.waitKey(0)
-
+else:
+    print('Test image not found')
