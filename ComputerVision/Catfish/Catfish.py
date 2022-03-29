@@ -1,4 +1,10 @@
 ## Facial recognition comparision between two images.
+# Usage: 
+# 1: Set take_picture to True/False
+# If take_picture is set to True. Press 'q' to take the picture.
+
+# Note: The number in the image is not the accuracy. It is the facial distance.
+# The smaller the number, the larger the similarity.
 
 # Import
 import cv2
@@ -6,22 +12,23 @@ import face_recognition
 from os.path import exists
 import os
 
-# Input
-PATH = os.path.dirname(os.path.realpath(__file__)) #'/Users/johnson.mok/Documents/Python_Scripts/ComputerVision/Catfish'
-truthname='PF.jpeg'
-savename='Catfishtest.jpg'
-take_picture = False
+# Input #
+PATH = os.path.dirname(os.path.realpath(__file__)) 
+truthname='PF.jpeg' # Ground truth picture
+savename='Catfishtest.jpg' # Picture taken to compare with the ground truth
+take_picture = False # True/False
+cam_channel = 1 # Default: 0. Use when you have multiple webcams, e.g., 0: laptop camera, 1: external camera
 
 PATH_TRUTH = os.path.join(PATH, truthname)
 PATH_TEST = os.path.join(PATH, savename)
 
 # Picture taking
 if(take_picture):
-    vid = cv2.VideoCapture(1) # 0: laptop camera, 1: external camera
+    vid = cv2.VideoCapture(cam_channel) 
     while(True):
         ret, frame = vid.read()
         cv2.imshow('frame', frame)
-        cv2.imwrite(PATH_TEST, frame) # Saves last frame as image
+        cv2.imwrite(PATH_TEST, frame) # Saves frame as image
         if cv2.waitKey(1) & 0xFF == ord('q'): # the 'q' button is set as the quitting button
             print('break')
             break
