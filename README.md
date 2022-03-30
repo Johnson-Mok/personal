@@ -3,3 +3,4 @@
 ## Overview
 - Computer vision
     - Facial recognition: Catfish
+    - Facial recognition: Celebrity recognizer
