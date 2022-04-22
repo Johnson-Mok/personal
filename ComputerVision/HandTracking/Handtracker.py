@@ -1,7 +1,9 @@
 import cv2
 import mediapipe as mp
+import pyautogui as pg
 
 # Documentation: google.github.io/mediapipe/solutions/hands.html
+# key press simulation: https://pyautogui.readthedocs.io/en/latest/
 
 # Setting up camera
 cap = cv2.VideoCapture(1)
@@ -37,14 +39,20 @@ while True:
             # Thumbs up detection
             if (hand_no == 0):
                 x1 = handLms.landmark[mpHands.HandLandmark(1).value].x
+                x2 = handLms.landmark[mpHands.HandLandmark(2).value].x
                 x4 = handLms.landmark[mpHands.HandLandmark(4).value].x
                 y1 = handLms.landmark[mpHands.HandLandmark(1).value].y
+                y2 = handLms.landmark[mpHands.HandLandmark(2).value].y
                 y4 = handLms.landmark[mpHands.HandLandmark(4).value].y
+    
 
-                if (y4<y1) and (abs(x1-x4)<0.05):
+                threshhold = 0.05
+                if (y4<y1) and (abs(x2-x4)<threshhold):
                     cv2.putText(img,'Thumbs up', (10,70), cv2.FONT_HERSHEY_PLAIN, 3, (255,0,255), 3)
-                elif (y4>y1) and (abs(x1-x4)<0.05):
+                    pg.write('Nice ')
+                elif (y4>y1) and (abs(x2-x4)<threshhold):
                     cv2.putText(img,'Thumbs down', (10,70), cv2.FONT_HERSHEY_PLAIN, 3, (255,0,255), 3)
+                    pg.write('Oof ')
 
             # for id, lm in enumerate(handLms.landmark):
             #     if id in Thumb: # Annotate part of hand
