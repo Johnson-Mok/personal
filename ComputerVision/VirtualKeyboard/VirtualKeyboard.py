@@ -10,7 +10,8 @@ import time
 from pynput.keyboard import Controller
 
 # Setting up camera
-cap = cv2.VideoCapture(0)
+camerainput = 1
+cap = cv2.VideoCapture(camerainput)
 w = 1280
 h = 720
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
@@ -94,6 +95,9 @@ def drawVirtualKeyboard(img, keys, key_w, key_h, start_h):
                         
                         i +=1
 
+newRun = True
+startTime = 0
+letterStart = 'Q'
 while True:
         success, img = cap.read()
         img = cv2.flip(img,1)
@@ -111,22 +115,22 @@ while True:
                                         cx, cy = int(lm.x *w), int(lm.y*h)
                                         cv2.circle(img, (cx,cy), 10, (0,0,255), -1)
 
-                                        # Button pressing (WIP!!!!)
+                                        # Button pressing (selects after maintaining the buttonpress for 2 seconds)
                                         for pos, letter in buttonPosList:
-                                                condition = (pos[0] < cx < pos[0]+ key_w) & (pos[1] < cy < pos[1]+ key_h)
-                                                if condition:
+                                                condition = (pos[0] < cx < pos[0]+ key_w) & (pos[1] < cy < pos[1]+ key_h) # Index finger within a key box
+                                                if (condition & newRun): # Start counting if condition satisfied
                                                         letterStart = letter
-                                                        print('start',letterStart)
                                                         startTime = time.time()
-                                                        
-                                                        if ((time.time()-startTime > 2) & (letterStart == letterEnd)):
-                                                                letterEnd = letter
-                                                                print('end',letterEnd)
-                                                                print('time',(time.time()-startTime > 2))           
-                                                                print(letter)
+                                                        newRun = False
+                                                elif (condition & (time.time()-startTime >= 2) & (letterStart == letter) & ~newRun): # if more than 2 seconds, write
+                                                        print(letter)
+                                                        pg.write(letter)
+                                                        newRun = True
+                                                elif (condition & (time.time()-startTime < 2) & (letterStart == letter) & ~newRun): # if less than 2 seconds, wait
+                                                        print('holding button')
+                                                elif (condition & (letterStart != letter) & ~newRun): # if index finger on different key, restart timer
+                                                        newRun = True
                                                                 
-                                                                
-
         # Display camera image
         cv2.imshow("Image", img)
         if cv2.waitKey(1) & 0xFF == ord('q'): # the 'q' button is set as the quitting button
