@@ -6,7 +6,7 @@ import pyautogui as pg
 # key press simulation: https://pyautogui.readthedocs.io/en/latest/
 
 # Setting up camera
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 # Declare hands object from mediapipe
 mpHands = mp.solutions.hands
@@ -26,6 +26,11 @@ Ring_finger = [13,14,15,16]
 Pinky = [17,18,19,20]
 Palm = [0,5,9,13,17]
 
+def getHandCoord(handLandMarks, id):
+    x = handLandMarks.landmark[mpHands.HandLandmark(id).value].x
+    y = handLandMarks.landmark[mpHands.HandLandmark(id).value].y
+    return x,y
+
 while True:
     success, img = cap.read()
     img = cv2.flip(img,1)
@@ -38,19 +43,14 @@ while True:
 
             # Thumbs up detection
             if (hand_no == 0):
-                x1 = handLms.landmark[mpHands.HandLandmark(1).value].x
-                x2 = handLms.landmark[mpHands.HandLandmark(2).value].x
-                x4 = handLms.landmark[mpHands.HandLandmark(4).value].x
-                y1 = handLms.landmark[mpHands.HandLandmark(1).value].y
-                y2 = handLms.landmark[mpHands.HandLandmark(2).value].y
-                y4 = handLms.landmark[mpHands.HandLandmark(4).value].y
+                x4, y4 = getHandCoord(handLms, 4)
+                x2, y2 = getHandCoord(handLms, 2)
     
-
                 threshhold = 0.05
-                if (y4<y1) and (abs(x2-x4)<threshhold):
+                if (y4<y2) and (abs(x2-x4)<threshhold):
                     cv2.putText(img,'Thumbs up', (10,70), cv2.FONT_HERSHEY_PLAIN, 3, (255,0,255), 3)
                     pg.write('Nice ')
-                elif (y4>y1) and (abs(x2-x4)<threshhold):
+                elif (y4>y2) and (abs(x2-x4)<threshhold):
                     cv2.putText(img,'Thumbs down', (10,70), cv2.FONT_HERSHEY_PLAIN, 3, (255,0,255), 3)
                     pg.write('Oof ')
 
