@@ -28,14 +28,14 @@ hands = mpHands.Hands(static_image_mode=False,
 Index_finger_tip = 8
 
 # Virtual keyboard
-keys = [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-        ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
-        ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"]]
+keys = [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P","capslock"],
+        ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";","enter"],
+        ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/","space"]]
 
 # Key sizes as a function of the camera window
 start_h = int(h*0.75)
 key_h = int(h*0.25/3)
-key_w = int(w/10)
+key_w = int(w/len(keys[0]))
 
 # Letter position relative to box
 letter_w = int(np.ceil(key_w*0.25))
@@ -134,12 +134,14 @@ def drawVirtualKeyboard(img, key_w, key_h, buttonPosList):
                 drawKey(img, key, pos, key_w, key_h, letter_w, letter_h)
 
 # Button press after x seconds
-def pressAfterXSeconds(letter, pos, key_w, key_h, waitSec):
+def pressAfterXSeconds(img, letter, waitSec):
         '''
         Write the letter after maintaining position for X seconds.
 
         Parameters
         ----------
+        img: numpy.array
+                Image to draw on
         letter: str
                 Letter currently selected by the user.
         waitSec: int
@@ -155,12 +157,18 @@ def pressAfterXSeconds(letter, pos, key_w, key_h, waitSec):
                 newRun = False
         elif ((time.time()-startTime >= waitSec) & (letterStart == letter) & ~newRun): # if more than 2 seconds, write
                 print(letter)
-                pg.write(letter) # Actual write, open a text document to see output
+                pg.press(letter) # Actual write, open a text document to see output
                 newRun = True
         elif ((time.time()-startTime < waitSec) & (letterStart == letter) & ~newRun): # if less than 2 seconds, wait
                 cv2.putText(img, f'{time.time()-startTime:.2f}', (10,70), cv2.FONT_HERSHEY_PLAIN, 3, (255,255,255), 3) # Show hold timer
         elif ((letterStart != letter) & ~newRun): # if index finger on different key, restart timer
                 newRun = True
+
+def CAPSLOCK_STATE():
+    import ctypes
+    hllDll = ctypes.WinDLL ("User32.dll")
+    VK_CAPITAL = 0x14
+    return hllDll.GetKeyState(VK_CAPITAL)
 
 
 ### MAIN ###
@@ -170,6 +178,7 @@ startTime = 0
 letterStart = 'Q'
 
 buttonPosList = getButtonPosList(key_w, key_h, start_h, keys)
+pg.press("capslock") # start with lower letters
 
 while True:
         success, img = cap.read()
@@ -177,7 +186,14 @@ while True:
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         drawVirtualKeyboard(img, key_w, key_h, buttonPosList)
-        
+
+        # Show caps lock status
+        CAPSLOCK = CAPSLOCK_STATE()
+        if ((CAPSLOCK) & 0xffff) != 0:
+                cv2.putText(img, "Lower", (int(w*0.8),70), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 3) 
+        elif ((CAPSLOCK) & 0xffff) == 0:
+                cv2.putText(img, "Upper", (int(w*0.8),70), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 3) 
+
         # Hand detection + hand landmark markingG
         results = hands.process(imgRGB)
         if results.multi_hand_landmarks:
@@ -192,11 +208,14 @@ while True:
                                         for pos, letter in buttonPosList:
                                                 condition = (pos[0] < cx < pos[0]+ key_w) & (pos[1] < cy < pos[1]+ key_h) # Index finger within a key box
                                                 if condition:
-                                                        pressAfterXSeconds(letter, pos, key_w, key_h, 2) # Hold for 2 seconds to write
+                                                        pressAfterXSeconds(img, letter, 2) # Hold for 2 seconds to write
                                                                 
         # Display camera image
         cv2.imshow("Image", img)
-        if cv2.waitKey(1) & 0xFF == ord('q'): # the 'q' button is set as the quitting button
+        if cv2.waitKey(1) & 0xFF == 27: #escape is set as the quitting button
                 print('break')
+                if ((CAPSLOCK) & 0xffff) != 0:
+                        pg.press("capslock") # Turn caps lock of when shutting down.
+
                 cv2.destroyAllWindows()
                 break
