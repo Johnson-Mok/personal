@@ -1,7 +1,20 @@
-# https://faun.pub/virtual-keyboard-using-computer-vision-32b61981c5b1
-# Documentation: google.github.io/mediapipe/solutions/hands.html
-# key press simulation: https://pyautogui.readthedocs.io/en/latest/
 
+'''
+Summary:
+        Virtual keyboard making use of computer vision, OpenCV, and handtracking via mediapipe.
+Sources:
+        Inspiration: https://faun.pub/virtual-keyboard-using-computer-vision-32b61981c5b1
+        Documentation handtracker: google.github.io/mediapipe/solutions/hands.html
+        Key press simulation: https://pyautogui.readthedocs.io/en/latest/
+        Source caps lock status: https://localcoder.org/python-3-detect-caps-lock-status
+
+Usage:
+        Make sure to set the right camera input. Default should be 0. Set to 1 if you have both a laptop cam and an external webcam.
+        Press escape when you want to shut down the script.
+
+Author: 
+        JM
+'''
 # Import packages
 import cv2
 import mediapipe as mp
