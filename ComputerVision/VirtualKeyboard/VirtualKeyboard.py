@@ -21,6 +21,7 @@ import mediapipe as mp
 import pyautogui as pg
 import numpy as np
 import time
+import ctypes
 
 # Setting up camera
 camerainput = 1 # default 0
@@ -178,7 +179,11 @@ def pressAfterXSeconds(img, letter, waitSec):
                 newRun = True
 
 def CAPSLOCK_STATE():
-    import ctypes
+    '''
+    Returns the state of capslock.
+    Capslock on -> value not equal to zero.
+    Capslock off -> value equal to zero.
+    '''
     hllDll = ctypes.WinDLL ("User32.dll")
     VK_CAPITAL = 0x14
     return hllDll.GetKeyState(VK_CAPITAL)
