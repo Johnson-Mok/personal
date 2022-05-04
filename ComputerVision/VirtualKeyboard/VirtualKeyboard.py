@@ -1,4 +1,3 @@
-
 '''
 Summary:
         Virtual keyboard making use of computer vision, OpenCV, and handtracking via mediapipe.
@@ -20,11 +19,10 @@ import cv2
 import mediapipe as mp
 import pyautogui as pg
 import numpy as np
-import time
-import ctypes
+from function_file import *
 
 # Setting up camera
-camerainput = 1 # default 0
+camerainput = 0 # default 0
 cap = cv2.VideoCapture(camerainput)
 w = 1280
 h = 720
@@ -55,141 +53,6 @@ key_w = int(w/len(keys[0]))
 letter_w = int(np.ceil(key_w*0.25))
 letter_h = int(np.ceil(key_h*0.8))
 
-
-### Helper functions
-# Save button startpoint
-def getButtonPosList(key_w, key_h, start_h, keys):
-        '''Gets a list of tuples containing the startpoint of the key and the letter.
-        
-        Parameters
-        ----------
-        keys: list
-                The letters to display ordered.
-        key_w: int
-                Key box width.
-        key_h: int
-                Key box heigth.
-        start_h: int
-                Start height of the whole keyboard.
-
-        Returns
-        ----------
-        buttonPosList: list
-             List of tuples containing the startpoint of the key and the letter.
-        '''
-
-        buttonPosList = []
-        j = -1
-        for ar in keys:
-                j +=1
-                i = 0
-                for key in ar:
-                        startpoint = (key_w*i,     start_h + key_h*j)
-                        tup = (startpoint, key)
-                        buttonPosList.append(tup)
-                        i +=1
-        return buttonPosList
-
-def drawKey(img, key, pos, key_w, key_h, letter_w, letter_h):
-        '''
-        Function to draw a key button on the camera screen.
-
-        Parameters
-        ----------
-        img: numpy.ndarray
-                Image to draw on.
-        key: str
-                Letter to draw.
-        pos: tuple
-                Start position of the keybutton
-        key_w: int
-                Key box width.
-        key_h
-                Key box height.
-        letter_w
-                Letter width.
-        letter_h
-                Letter height.
-        '''
-        # Draw boxes for keyboard
-        startpoint = (pos[0],        pos[1])
-        endpoint   = (pos[0]+ key_w, pos[1]+ key_h)
-        colour = (255, 0, 0)
-        thick = -1
-        colourBorder = (255,255,255)
-        thickBorder = 1
-        cv2.rectangle(img, startpoint, endpoint, colour, thick)
-        cv2.rectangle(img, startpoint, endpoint, colourBorder, thickBorder) # Border
-
-        # Draw letter 
-        org = (letter_w+pos[0], letter_h+pos[1])
-        fontLetter = cv2.FONT_HERSHEY_DUPLEX
-        fontSize = 1
-        fontColor = (255,255,255)
-        fontThick = 2
-        cv2.putText(img,key,org,fontLetter,fontSize,fontColor,fontThick)
-
-# Draw keyboard
-def drawVirtualKeyboard(img, key_w, key_h, buttonPosList):
-        '''Draws a virtual keyboard on the bottom of your image
-        
-        Parameters
-        ----------
-        img: numpy.ndarray
-                Image to draw on.
-        key_w: int
-                Key box width.
-        key_h: int
-                Key box heigth.
-        buttonPosList: list
-                List of tuples containing button position and the letter itself.
-        '''
-        for pos,key in buttonPosList:
-                drawKey(img, key, pos, key_w, key_h, letter_w, letter_h)
-
-# Button press after x seconds
-def pressAfterXSeconds(img, letter, waitSec):
-        '''
-        Write the letter after maintaining position for X seconds.
-
-        Parameters
-        ----------
-        img: numpy.array
-                Image to draw on
-        letter: str
-                Letter currently selected by the user.
-        waitSec: int
-                Number of seconds to maintain the hold
-        '''
-        global newRun
-        global startTime 
-        global letterStart
-
-        if (newRun): # Start counting if condition satisfied
-                letterStart = letter
-                startTime = time.time()
-                newRun = False
-        elif ((time.time()-startTime >= waitSec) & (letterStart == letter) & ~newRun): # if more than 2 seconds, write
-                print(letter)
-                pg.press(letter) # Actual write, open a text document to see output
-                newRun = True
-        elif ((time.time()-startTime < waitSec) & (letterStart == letter) & ~newRun): # if less than 2 seconds, wait
-                cv2.putText(img, f'{time.time()-startTime:.2f}', (10,70), cv2.FONT_HERSHEY_PLAIN, 3, (255,255,255), 3) # Show hold timer
-        elif ((letterStart != letter) & ~newRun): # if index finger on different key, restart timer
-                newRun = True
-
-def CAPSLOCK_STATE():
-    '''
-    Returns the state of capslock.
-    Capslock on -> value not equal to zero.
-    Capslock off -> value equal to zero.
-    '''
-    hllDll = ctypes.WinDLL ("User32.dll")
-    VK_CAPITAL = 0x14
-    return hllDll.GetKeyState(VK_CAPITAL)
-
-
-### MAIN ###
 # Set up for pressAfterXSeconds
 newRun = True
 startTime = 0
@@ -203,7 +66,7 @@ while True:
         img = cv2.flip(img,1)
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        drawVirtualKeyboard(img, key_w, key_h, buttonPosList)
+        drawVirtualKeyboard(img, key_w, key_h, buttonPosList, letter_w, letter_h)
 
         # Show caps lock status
         CAPSLOCK = CAPSLOCK_STATE()
@@ -226,7 +89,7 @@ while True:
                                         for pos, letter in buttonPosList:
                                                 condition = (pos[0] < cx < pos[0]+ key_w) & (pos[1] < cy < pos[1]+ key_h) # Index finger within a key box
                                                 if condition:
-                                                        pressAfterXSeconds(img, letter, 2) # Hold for 2 seconds to write
+                                                        newRun, startTime, letterStart = pressAfterXSeconds(img, letter, 2, newRun, startTime, letterStart) # Hold for 2 seconds to write
                                                                 
         # Display camera image
         cv2.imshow("Image", img)
