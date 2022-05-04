@@ -30,14 +30,14 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
 
 # Declare hands object from mediapipe
-mpHands = mp.solutions.hands
-hands = mpHands.Hands(static_image_mode=False,
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(static_image_mode=False,
                       max_num_hands=2,
                       min_detection_confidence=0.5,
                       min_tracking_confidence=0.5)
 
 # Landmark numbers
-Index_finger_tip = 8
+index_finger_tip = 8
 
 # Virtual keyboard
 keys = [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P","capslock"],
@@ -54,11 +54,11 @@ letter_w = int(np.ceil(key_w*0.25))
 letter_h = int(np.ceil(key_h*0.8))
 
 # Set up for pressAfterXSeconds
-newRun = True
-startTime = 0
-letterStart = 'Q'
+new_run = True
+start_time = 0
+letter_start = 'Q'
 
-buttonPosList = getButtonPosList(key_w, key_h, start_h, keys)
+button_pos_list = get_button_pos_list(key_w, key_h, start_h, keys)
 pg.press("capslock") # start with lower letters
 
 while True:
@@ -66,7 +66,7 @@ while True:
         img = cv2.flip(img,1)
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        drawVirtualKeyboard(img, key_w, key_h, buttonPosList, letter_w, letter_h)
+        draw_virtual_keyboard(img, key_w, key_h, button_pos_list, letter_w, letter_h)
 
         # Show caps lock status
         CAPSLOCK = CAPSLOCK_STATE()
@@ -78,18 +78,17 @@ while True:
         # Hand detection + hand landmark markingG
         results = hands.process(imgRGB)
         if results.multi_hand_landmarks:
-                for hand_no, handLms in enumerate(results.multi_hand_landmarks):
-                        # mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)
-                        for id, lm in enumerate(handLms.landmark):
-                                if id == Index_finger_tip: # Annotate part of hand
+                for hand_no, hand_lms in enumerate(results.multi_hand_landmarks):
+                        for id, lm in enumerate(hand_lms.landmark):
+                                if id == index_finger_tip: # Annotate part of hand
                                         cx, cy = int(lm.x *w), int(lm.y*h)
                                         cv2.circle(img, (cx,cy), 10, (0,0,255), -1)
 
                                         # Button pressing (selects after maintaining the buttonpress for 2 seconds)
-                                        for pos, letter in buttonPosList:
+                                        for pos, letter in button_pos_list:
                                                 condition = (pos[0] < cx < pos[0]+ key_w) & (pos[1] < cy < pos[1]+ key_h) # Index finger within a key box
                                                 if condition:
-                                                        newRun, startTime, letterStart = pressAfterXSeconds(img, letter, 2, newRun, startTime, letterStart) # Hold for 2 seconds to write
+                                                        new_run, start_time, letter_start = press_after_x_seconds(img, letter, 2, new_run, start_time, letter_start) # Hold for 2 seconds to write
                                                                 
         # Display camera image
         cv2.imshow("Image", img)
